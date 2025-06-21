@@ -1,0 +1,11 @@
+name: Healthcare-Diabetes
+
+conda_env: conda.yaml
+
+entry_points:
+  main:
+    parameters:
+      csv_url: {type: str, default: "Dataset Preprocessing/Healthcare-Diabetes_preprocessing.csv"}
+      target_var: {type: str, default: "Outcome"}
+    command: >
+      python modelling.py --csv_url {csv_url} --target_var {target_var}
