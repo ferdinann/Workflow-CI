@@ -10,7 +10,7 @@ on:
 
 env:
   EXPERIMENT_NAME: Healthcare-Diabetes_Model_Tunning
-  CSV_URL: MLProject/dataset_preprocessing/Healthcare-Diabetes_preprocessing.csv
+  CSV_URL: MLProject/Dataset Preprocessing/Healthcare-Diabetes_preprocessing.csv
   TARGET_VAR: Outcome
   MLFLOW_TRACKING_URI: https://dagshub.com/ferdinantag8/Membangun_model.mlflow/
   MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
@@ -74,7 +74,7 @@ jobs:
 
     - name: Build Docker Model
       run: |
-        mlflow models build-docker --model-uri "runs:/$RUN_ID/rf_best_model" --name "telco_customer_churn_model"
+        mlflow models build-docker --model-uri "runs:/$RUN_ID/rf_best_model" --name "Healthcare-Diabetes"
     - name: Log in to Docker Hub
       uses: docker/login-action@v2
       with:
@@ -83,7 +83,7 @@ jobs:
 
     - name: Tag Docker Image
       run: |
-        docker tag telco_customer_churn_model ${{ secrets.DOCKER_USERNAME }}/telco_customer_churn_model:latest
+        docker tag telco_customer_churn_model ${{ secrets.DOCKER_USERNAME }}/Healthcare-Diabetes:latest
     - name: Push Docker Image
       run: |
         docker push ${{ secrets.DOCKER_USERNAME }}/telco_customer_churn_model:latest
