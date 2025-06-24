@@ -83,7 +83,7 @@ jobs:
 
     - name: Tag Docker Image
       run: |
-        docker tag telco_customer_churn_model ${{ secrets.DOCKER_USERNAME }}/Healthcare-Diabetes:latest
+        docker tag smls ${{ secrets.DOCKER_USERNAME }}/Healthcare-Diabetes:latest
     - name: Push Docker Image
       run: |
-        docker push ${{ secrets.DOCKER_USERNAME }}/telco_customer_churn_model:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/smls:latest
