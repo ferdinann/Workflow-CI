@@ -39,7 +39,7 @@ jobs:
         pip install python-dotenv
     - name: Run MLflow Project
       run: |
-        mlflow run MLProject --env-manager=local --run-name rf_fixed_run
+        python modeling.py
     - name: Get latest MLflow run_id
       run: |
         echo "Getting latest run ID..."
