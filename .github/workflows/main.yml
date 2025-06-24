@@ -10,7 +10,7 @@ on:
       
 env:
   EXPERIMENT_NAME: Healthcare-Diabetes
-  CSV_URL: MLProject/Dataset Preprocessing/
+  CSV_URL: MLProject/Dataset Preprocessing/Healthcare-Diabetes_preprocessing.csv
   TARGET_VAR: Outcome
   MLFLOW_TRACKING_URI: https://dagshub.com/ferdinantag8/Membangun_model.mlflow/
   MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
@@ -39,7 +39,7 @@ jobs:
         pip install python-dotenv
     - name: Run MLflow Project
       run: |
-        python modeling.py
+        mlflow run MLProject --env-manager=local --run-name rf_fixed_run
     - name: Get latest MLflow run_id
       run: |
         echo "Getting latest run ID..."
