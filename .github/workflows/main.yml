@@ -80,7 +80,7 @@ jobs:
 
     - name: Build Docker Model
       run: |
-        mlflow models build-docker --model-uri "runs:/$RUN_ID/rf_best_model" --name "Healthcare-Diabetes"
+        mlflow models build-docker --model-uri "runs:/$RUN_ID/rf_best_model" --name "MLProject"
 
     - name: Log in to Docker Hub
       uses: docker/login-action@v2
@@ -90,8 +90,8 @@ jobs:
 
     - name: Tag Docker Image
       run: |
-        docker tag Healthcare-Diabetes ${{ secrets.DOCKER_USERNAME }}/Healthcare-Diabetes:latest
+        docker tag latest ${{ secrets.DOCKER_USERNAME }}/ferdinanginting:latest
 
     - name: Push Docker Image
       run: |
-        docker push ${{ secrets.DOCKER_USERNAME }}/Healthcare-Diabetes:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/ferdinanginting:latest
