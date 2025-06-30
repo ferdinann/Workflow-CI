@@ -42,7 +42,7 @@ jobs:
 
     - name: Run MLflow Project
       run: |
-        mlflow run MLProject --env-manager=local --run-name Modelling_tunning_manuallog
+        mlflow run MLProject --env-manager=local --run-name modelling
 
     - name: Get latest MLflow run_id
       run: |
