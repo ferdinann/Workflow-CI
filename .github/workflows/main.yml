@@ -96,16 +96,3 @@ jobs:
     - name: Push Docker Image
       run: |
         docker push ${{ secrets.DOCKER_USERNAME }}/ferdinanginting:latest
-
-    - name: Debug MLflow Credentials
-      run: |
-        echo "MLFLOW_TRACKING_USERNAME is: ${{ secrets.MLFLOW_TRACKING_USERNAME }}"
-        # TIDAK PERNAH mencetak password ke log:
-        # # echo "MLFLOW_TRACKING_PASSWORD is: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}" 
-        if [ -z "${{ secrets.MLFLOW_TRACKING_USERNAME }}" ]; then
-          echo "MLFLOW_TRACKING_USERNAME secret is empty or not found!"
-        fi  <-- ERROR MUNGKIN DISINI
-        
-        if [ -z "${{ secrets.MLFLOW_TRACKING_PASSWORD }}" ]; then
-          echo "MLFLOW_TRACKING_PASSWORD secret is empty or not found!"
-        fi
