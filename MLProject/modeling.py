@@ -59,8 +59,8 @@ if __name__ == "__main__":
     load_dotenv()
     username = os.getenv("MLFLOW_TRACKING_USERNAME")
     password = os.getenv("MLFLOW_TRACKING_PASSWORD")
-    if not username or not password:
-        raise EnvironmentError("MLFLOW_TRACKING_USERNAME dan MLFLOW_TRACKING_PASSWORD harus di-set sebagai environment variable")
+    # if not username or not password:
+    #     raise EnvironmentError("MLFLOW_TRACKING_USERNAME dan MLFLOW_TRACKING_PASSWORD harus di-set sebagai environment variable")
 
     # Set MLflow tracking URI
     mlflow.set_tracking_uri("https://dagshub.com/ferdinantag8/Membangun_model.mlflow/")
