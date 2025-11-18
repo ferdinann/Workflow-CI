@@ -72,7 +72,7 @@ jobs:
       run: docker tag diabetes-app ${{ secrets.DOCKER_USERNAME }}/diabetes-app:latest
 
     - name: Push Docker Image
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/titanic-image:latest
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/diabetes-app:latest
 
     - name: Log out from Docker Hub
       run: docker logout
