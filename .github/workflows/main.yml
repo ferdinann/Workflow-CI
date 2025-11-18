@@ -10,9 +10,10 @@ on:
 
 env:
   EXPERIMENT_NAME: Healthcare-Diabetes
-  CSV_URL: MLProject/Dataset "Preprocessing/Healthcare-Diabetes_preprocessing.csv"
+  CSV_URL: MLProject/Dataset/Preprocessing/Healthcare-Diabetes_preprocessing.csv
   TARGET_VAR: Outcome
   MLFLOW_TRACKING_URI: https://dagshub.com/ferdinantag8/Membangun_model.mlflow/
+  MLFLOW_TRACKING_TOKEN: ${{ secrets.MLFLOW_TRACKING_TOKEN }}
   MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
   MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
 
