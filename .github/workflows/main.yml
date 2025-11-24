@@ -30,7 +30,7 @@ jobs:
       # Tidak perlu export URI lagi karena sudah ada di 'env' global di atas
       run: |
         cd MLProject
-        mlflow run . --env-manager=local
+        mlflow run . --env-manager=local --experiment-name Healthcare-Diabetes
 
     - name: Get latest MLflow run_id
       id: get_run_id
