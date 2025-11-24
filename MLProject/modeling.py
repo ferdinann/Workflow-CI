@@ -48,55 +48,56 @@ def modeling_with_tuning(X_train_path, X_test_path, y_train_path, y_test_path):
 
     return best_model, accuracy, report, grid_search.best_params_, X_test
 
+# ... (kode impor di atas tetap sama)
+
 if __name__ == "__main__":
-    # Path dataset hasil split
-    # Pastikan file-file ini ada relatif terhadap tempat script dijalankan
     X_train_path = "Dataset Preprocessing/X_train.csv"
     X_test_path = "Dataset Preprocessing/X_test.csv"
     y_train_path = "Dataset Preprocessing/y_train.csv"
     y_test_path = "Dataset Preprocessing/y_test.csv"
 
-    # --- PERBAIKAN UTAMA ---
-    # Kita TIDAK melakukan set_tracking_uri secara hardcode ke DagsHub.
-    # Script ini akan otomatis menggunakan MLFLOW_TRACKING_URI dari Environment Variable.
-    # Di CI YAML, kita sudah set: MLFLOW_TRACKING_URI="file://${{ github.workspace }}/MLProject/mlruns"
-    
-    # load_dotenv() # Tidak wajib di CI
+    print(f"Tracking URI: {mlflow.get_tracking_uri()}")
 
-    print(f"Tracking URI saat ini: {mlflow.get_tracking_uri()}")
+    # Logika penentuan Run
+    if mlflow.active_run():
+        run = mlflow.active_run()
+        print(f"Active run detected: {run.info.run_id}")
+    else:
+        print("No active run detected. Starting new run manually.")
+        mlflow.set_experiment("Healthcare-Diabetes")
+        run = mlflow.start_run(run_name="Modelling_tuning_manuallog")
 
-    # Set Experiment
-    # MLflow akan membuat folder experiment ID di dalam ./mlruns jika belum ada
-    mlflow.set_experiment("Healthcare-Diabetes")
+    # --- MULAI PROSES TRAINING ---
+    with run:
+        # Simpan Run ID ke file teks agar bisa dibaca CI/CD (PENTING!)
+        with open("run_id.txt", "w") as f:
+            f.write(run.info.run_id)
+        
+        print(f"Run ID {run.info.run_id} saved to run_id.txt")
 
-    with mlflow.start_run(run_name="Modelling_tunning_manuallog"):
+        # Jalankan fungsi modeling
         model, accuracy, report, best_params, X_test = modeling_with_tuning(X_train_path, X_test_path, y_train_path, y_test_path)
 
-        # Log params
-        for param, value in best_params.items():
-            mlflow.log_param(param, value)
-        
-        # Log metrics
+        # Log params & metrics
+        mlflow.log_params(best_params)
         mlflow.log_metric("accuracy", accuracy)
         mlflow.log_metric("precision", report["weighted avg"]["precision"])
         mlflow.log_metric("recall", report["weighted avg"]["recall"])
         mlflow.log_metric("f1_score", report["weighted avg"]["f1-score"])
 
-        # Set tag
-        mlflow.set_tag("stage", "tunning")
+        mlflow.set_tag("stage", "tuning")
         mlflow.set_tag("model_type", "RandomForestClassifier")
 
-        # Tambah signature
         input_example = X_test.iloc[:1]
         signature = infer_signature(X_test, model.predict(X_test))
 
-        # Simpan model
+        # Log Model
         mlflow.sklearn.log_model(
             model,
-            artifact_path="model", # Saya ubah jadi 'model' agar standar dengan perintah build-docker
+            artifact_path="model",
             signature=signature,
             input_example=input_example,
             conda_env="conda.yaml"
         )
-
-        print("Proses tunning dan logged MLflow selesai")
+    
+    print("Proses selesai")
