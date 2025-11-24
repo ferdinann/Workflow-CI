@@ -32,28 +32,32 @@ jobs:
     - name: Get latest MLflow run_id
       id: get_run_id
       run: |
-        # PERBAIKAN: Mencari run_id terbaru secara REKURSIF di semua folder experiment
-        # Kita menggunakan 'find' untuk mencari folder dengan pola 32 karakter hex (Run ID)
-        # Lalu sort berdasarkan waktu modifikasi (%T@) untuk mengambil yang paling baru
+        echo "📂 Mencari Run ID terbaru di: ${{ github.workspace }}/MLProject/mlruns"
         
-        LATEST_RUN_PATH=$(find "${{ github.workspace }}/MLProject/mlruns" -mindepth 2 -maxdepth 2 -type d -regextype posix-extended -regex ".*/[a-f0-9]{32}" -printf "%T@ %p\n" | sort -n | tail -n 1 | awk '{print $2}')
+        # TEKNIK BARU: Menggunakan 'find' untuk mencari folder run secara global & rekursif
+        # 1. Cari folder (-type d) di kedalaman 2 (mlruns/exp_id/run_id)
+        # 2. Filter nama folder yang terdiri dari 32 karakter hex (ciri khas Run ID MLflow)
+        # 3. Print waktu modifikasi (%T@) dan path lengkap (%p)
+        # 4. Sort numeric (-n) agar yang paling baru ada di bawah
+        # 5. Ambil baris terakhir (terbaru)
+        
+        LATEST_RUN_INFO=$(find "${{ github.workspace }}/MLProject/mlruns" -mindepth 2 -maxdepth 2 -type d -regextype posix-extended -regex ".*/[a-f0-9]{32}" -printf "%T@ %p\n" | sort -n | tail -n 1)
 
-        if [ -z "$LATEST_RUN_PATH" ]; then
-          echo "❌ Gagal menemukan Run ID di folder mlruns!"
+        if [ -z "$LATEST_RUN_INFO" ]; then
+          echo "❌ ERROR: Tidak ada folder Run ID yang ditemukan!"
+          # Debugging: List struktur folder agar tahu apa isinya
+          ls -R MLProject/mlruns
           exit 1
         fi
 
+        # Ambil path dari output (kolom kedua setelah timestamp)
+        FULL_PATH=$(echo "$LATEST_RUN_INFO" | awk '{print $2}')
+        
         # Ambil nama folder terakhir sebagai Run ID
-        RUN_ID=$(basename "$LATEST_RUN_PATH")
-        # Ambil nama folder parent sebagai Experiment ID
-        EXP_ID=$(basename $(dirname "$LATEST_RUN_PATH"))
-
-        echo "✅ Ditemukan Run ID: $RUN_ID"
-        echo "✅ Ditemukan Experiment ID: $EXP_ID"
-
-        # Simpan ke Env Vars GitHub
+        RUN_ID=$(basename "$FULL_PATH")
+        
+        echo "✅ DITEMUKAN RUN ID: $RUN_ID"
         echo "MLFLOW_RUN_ID=$RUN_ID" >> $GITHUB_ENV
-        echo "experiment_id=$EXP_ID" >> $GITHUB_ENV
 
     - name: Install additional dependencies
       run: pip install requests
