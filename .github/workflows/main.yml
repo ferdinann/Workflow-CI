@@ -8,11 +8,9 @@ on:
 jobs:
   train_model:
     runs-on: ubuntu-latest
-    # 1. PERBAIKAN UTAMA: Set Environment Variable secara Global untuk job ini
-    # Ini memastikan MLflow selalu melihat ke folder lokal, bukan ke DagsHub
     env:
       MLFLOW_TRACKING_URI: "file://${{ github.workspace }}/MLProject/mlruns"
-      MLFLOW_NO_PERMISSION_CHECK: "true" # Mengabaikan cek permission file untuk local run
+      MLFLOW_NO_PERMISSION_CHECK: "true"
 
     steps:
     - name: Checkout repo
@@ -27,7 +25,6 @@ jobs:
       run: pip install -r MLProject/requirements.txt
 
     - name: Run MLflow project
-      # Tidak perlu export URI lagi karena sudah ada di 'env' global di atas
       run: |
         cd MLProject
         mlflow run . --env-manager=local --experiment-name Healthcare-Diabetes
@@ -35,38 +32,34 @@ jobs:
     - name: Get latest MLflow run_id
       id: get_run_id
       run: |
-        # Mencari run_id terbaru dari folder mlruns lokal
-        # Asumsi default experiment ID adalah '0'
+        # PERBAIKAN: Mencari run_id terbaru secara REKURSIF di semua folder experiment
+        # Kita menggunakan 'find' untuk mencari folder dengan pola 32 karakter hex (Run ID)
+        # Lalu sort berdasarkan waktu modifikasi (%T@) untuk mengambil yang paling baru
         
-        # Cari folder experiment (bisa 0 atau angka lain jika diset)
-        # Kita ambil folder numeric pertama yang ditemukan di dalam mlruns
-        EXP_ID=$(ls "${{ github.workspace }}/MLProject/mlruns" | grep -E '^[0-9]+$' | head -n 1)
-        
-        if [ -z "$EXP_ID" ]; then
-          echo "Experiment ID folder not found!"
-          exit 1
-        fi
-        
-        echo "Found Experiment ID: $EXP_ID"
-        echo "experiment_id=$EXP_ID" >> $GITHUB_ENV
+        LATEST_RUN_PATH=$(find "${{ github.workspace }}/MLProject/mlruns" -mindepth 2 -maxdepth 2 -type d -regextype posix-extended -regex ".*/[a-f0-9]{32}" -printf "%T@ %p\n" | sort -n | tail -n 1 | awk '{print $2}')
 
-        # Ambil run_id terbaru (folder 32 karakter hex)
-        RUN_ID=$(ls -1t "${{ github.workspace }}/MLProject/mlruns/$EXP_ID" | grep -E '^[a-f0-9]{32}$' | head -n 1)
-        
-        if [ -z "$RUN_ID" ]; then
-          echo "Failed to get run_id"
+        if [ -z "$LATEST_RUN_PATH" ]; then
+          echo "❌ Gagal menemukan Run ID di folder mlruns!"
           exit 1
         fi
 
-        echo "Latest run_id: $RUN_ID"
+        # Ambil nama folder terakhir sebagai Run ID
+        RUN_ID=$(basename "$LATEST_RUN_PATH")
+        # Ambil nama folder parent sebagai Experiment ID
+        EXP_ID=$(basename $(dirname "$LATEST_RUN_PATH"))
+
+        echo "✅ Ditemukan Run ID: $RUN_ID"
+        echo "✅ Ditemukan Experiment ID: $EXP_ID"
+
+        # Simpan ke Env Vars GitHub
         echo "MLFLOW_RUN_ID=$RUN_ID" >> $GITHUB_ENV
+        echo "experiment_id=$EXP_ID" >> $GITHUB_ENV
 
     - name: Install additional dependencies
       run: pip install requests
 
-    # Optional: Upload artifact untuk debug jika error
     - name: Upload MLflow artifacts
-      if: always() 
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: mlartifacts
@@ -75,11 +68,11 @@ jobs:
     - name: Build Docker model
       run: |
         cd MLProject
-        # Perintah ini sekarang akan otomatis menggunakan URI dari Global Env
+        # Menggunakan variable yang sudah ditemukan dengan benar
         mlflow models build-docker -m "runs:/${{ env.MLFLOW_RUN_ID }}/model" -n diabetes-app
 
     - name: Log in to Docker Hub
-      uses: docker/login-action@v3 # Best practice: Gunakan action resmi
+      uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
