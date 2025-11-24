@@ -32,31 +32,20 @@ jobs:
     - name: Get latest MLflow run_id
       id: get_run_id
       run: |
-        echo "📂 Mencari Run ID terbaru di: ${{ github.workspace }}/MLProject/mlruns"
+        # Masuk ke folder project
+        cd MLProject
         
-        # TEKNIK BARU: Menggunakan 'find' untuk mencari folder run secara global & rekursif
-        # 1. Cari folder (-type d) di kedalaman 2 (mlruns/exp_id/run_id)
-        # 2. Filter nama folder yang terdiri dari 32 karakter hex (ciri khas Run ID MLflow)
-        # 3. Print waktu modifikasi (%T@) dan path lengkap (%p)
-        # 4. Sort numeric (-n) agar yang paling baru ada di bawah
-        # 5. Ambil baris terakhir (terbaru)
-        
-        LATEST_RUN_INFO=$(find "${{ github.workspace }}/MLProject/mlruns" -mindepth 2 -maxdepth 2 -type d -regextype posix-extended -regex ".*/[a-f0-9]{32}" -printf "%T@ %p\n" | sort -n | tail -n 1)
-
-        if [ -z "$LATEST_RUN_INFO" ]; then
-          echo "❌ ERROR: Tidak ada folder Run ID yang ditemukan!"
-          # Debugging: List struktur folder agar tahu apa isinya
-          ls -R MLProject/mlruns
+        # Cek apakah file run_id.txt ada
+        if [ ! -f run_id.txt ]; then
+          echo "❌ Error: File run_id.txt tidak ditemukan!"
           exit 1
         fi
 
-        # Ambil path dari output (kolom kedua setelah timestamp)
-        FULL_PATH=$(echo "$LATEST_RUN_INFO" | awk '{print $2}')
+        # Baca ID dari file
+        RUN_ID=$(cat run_id.txt)
+        echo "✅ Sukses membaca Run ID: $RUN_ID"
         
-        # Ambil nama folder terakhir sebagai Run ID
-        RUN_ID=$(basename "$FULL_PATH")
-        
-        echo "✅ DITEMUKAN RUN ID: $RUN_ID"
+        # Simpan ke Environment Variable GitHub
         echo "MLFLOW_RUN_ID=$RUN_ID" >> $GITHUB_ENV
 
     - name: Install additional dependencies
