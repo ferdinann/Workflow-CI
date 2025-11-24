@@ -4,13 +4,13 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import accuracy_score, classification_report
 import mlflow
-import mlflow.sklearn
 from mlflow.models.signature import infer_signature
 import os
-from dotenv import load_dotenv
+# from dotenv import load_dotenv # Opsional di CI
 
 def modeling_with_tuning(X_train_path, X_test_path, y_train_path, y_test_path):
     # Load data hasil preprocessing & split
+    # Pastikan file path benar sesuai struktur direktori saat script dijalankan
     X_train = pd.read_csv(X_train_path)
     X_test = pd.read_csv(X_test_path)
     y_train = pd.read_csv(y_train_path).squeeze()
@@ -50,20 +50,23 @@ def modeling_with_tuning(X_train_path, X_test_path, y_train_path, y_test_path):
 
 if __name__ == "__main__":
     # Path dataset hasil split
+    # Pastikan file-file ini ada relatif terhadap tempat script dijalankan
     X_train_path = "Dataset Preprocessing/X_train.csv"
     X_test_path = "Dataset Preprocessing/X_test.csv"
     y_train_path = "Dataset Preprocessing/y_train.csv"
     y_test_path = "Dataset Preprocessing/y_test.csv"
 
-    # Autentikasi ke DagsHub
-    load_dotenv()
-    username = os.getenv("MLFLOW_TRACKING_USERNAME")
-    password = os.getenv("MLFLOW_TRACKING_PASSWORD")
-    # if not username or not password:
-    #     raise EnvironmentError("MLFLOW_TRACKING_USERNAME dan MLFLOW_TRACKING_PASSWORD harus di-set sebagai environment variable")
+    # --- PERBAIKAN UTAMA ---
+    # Kita TIDAK melakukan set_tracking_uri secara hardcode ke DagsHub.
+    # Script ini akan otomatis menggunakan MLFLOW_TRACKING_URI dari Environment Variable.
+    # Di CI YAML, kita sudah set: MLFLOW_TRACKING_URI="file://${{ github.workspace }}/MLProject/mlruns"
+    
+    # load_dotenv() # Tidak wajib di CI
 
-    # Set MLflow tracking URI
-    mlflow.set_tracking_uri("https://dagshub.com/ferdinantag8/Membangun_model.mlflow/")
+    print(f"Tracking URI saat ini: {mlflow.get_tracking_uri()}")
+
+    # Set Experiment
+    # MLflow akan membuat folder experiment ID di dalam ./mlruns jika belum ada
     mlflow.set_experiment("Healthcare-Diabetes")
 
     with mlflow.start_run(run_name="Modelling_tunning_manuallog"):
@@ -79,7 +82,7 @@ if __name__ == "__main__":
         mlflow.log_metric("recall", report["weighted avg"]["recall"])
         mlflow.log_metric("f1_score", report["weighted avg"]["f1-score"])
 
-        # Set tag untuk menandai tahap lifecycle model
+        # Set tag
         mlflow.set_tag("stage", "tunning")
         mlflow.set_tag("model_type", "RandomForestClassifier")
 
@@ -87,10 +90,10 @@ if __name__ == "__main__":
         input_example = X_test.iloc[:1]
         signature = infer_signature(X_test, model.predict(X_test))
 
-        # Simpan model ke dalam MLflow dengan nama artifact rf_model
+        # Simpan model
         mlflow.sklearn.log_model(
             model,
-            artifact_path="rf_best_model",
+            artifact_path="model", # Saya ubah jadi 'model' agar standar dengan perintah build-docker
             signature=signature,
             input_example=input_example,
             conda_env="conda.yaml"
